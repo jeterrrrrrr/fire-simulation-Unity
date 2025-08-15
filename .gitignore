@@ -1,0 +1,38 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+
+# Packages（建議版控 manifest.json 與 packages-lock.json）
+# 若你已把 lock 檔納入版控，下面兩行刪掉
+# Packages/manifest.temp.json
+
+# IDE
+.vs/
+.idea/
+*.sln
+*.csproj
+*.user
+*.pidb
+*.suo
+*.unityproj
+*.booproj
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 輸出/外部
+*.apk
+*.aab
+*.ipa
+*.exe
+*.dll
+*.so
+*.jar
+*.unitypackage
