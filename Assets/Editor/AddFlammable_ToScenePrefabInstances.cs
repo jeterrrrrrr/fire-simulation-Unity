@@ -90,8 +90,8 @@ public static class AddFlammable_ToScenePrefabInstances
                 f.ignitionHeat = 100f;
                 f.heatDissipation = 12f;
                 f.fuel = 1000f;
-                f.spreadRadius = 4f;
-                f.heatPerSecond = 50f;
+                f.spreadRadius = 3f;
+                f.heatPerSecond = 20f;
                 f.flammableMask = fireMask;     // «ü¨ì FireLayer
                 f.maxHeat = 500f;
 

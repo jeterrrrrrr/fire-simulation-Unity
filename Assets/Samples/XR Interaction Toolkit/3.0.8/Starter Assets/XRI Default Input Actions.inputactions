@@ -3335,13 +3335,22 @@
             ]
         },
         {
-            "name": "Fire extinguisher",
+            "name": "Fire Simulation",
             "id": "f9e77d32-9481-4335-b07c-165c900d74c4",
             "actions": [
                 {
                     "name": "Spray",
                     "type": "PassThrough",
                     "id": "8d00dfd7-4519-477a-9b6e-157ecb9421fa",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "OpenClose Door",
+                    "type": "Button",
+                    "id": "ef2f25f3-911f-4716-bed3-a9cee6077015",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -3357,6 +3366,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Spray",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b5e31fac-a4b6-45dd-b7f8-e0783a5fbf18",
+                    "path": "<XRController>/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OpenClose Door",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
