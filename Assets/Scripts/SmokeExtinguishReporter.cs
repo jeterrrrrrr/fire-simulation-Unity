@@ -42,6 +42,6 @@ public class SmokeExtinguishReporter : MonoBehaviour
 
         flam.CoolDown(totalCool);
         // 如需觀察粒子命中量，取消註解：
-        Debug.Log($"[SmokeExtinguish] Hit {other.name} x{count} → Cool {totalCool}");
+        //Debug.Log($"[SmokeExtinguish] Hit {other.name} x{count} → Cool {totalCool}");
     }
 }

@@ -6,20 +6,28 @@ public class Flammable : MonoBehaviour
     [Header("燃燒參數")]
     [Tooltip("達到此熱量就會點燃")]
     public float ignitionHeat = 100f;
+
     [Tooltip("未燃燒時每秒自然散熱量")]
     public float heatDissipation = 15f;
+
     [Tooltip("燃料量（秒）。燃燒時會逐秒扣除，<=0 即熄滅")]
     public float fuel = 120f;
+
     [Tooltip("向外傳熱的最大距離")]
     public float spreadRadius = 2f;
+
     [Tooltip("燃燒時對鄰居每秒輸出的熱量（距離近者更多，遠者更少）")]
     public float heatPerSecond = 40f;
+
     [Tooltip("允許傳熱的目標 Layer（請把可燃物都放同一 Layer，並在這裡勾選）")]
     public LayerMask flammableMask;
 
-    [Header("熱量上限")]
+    [Header("熱量控制")]
     [Tooltip("熱量上限；<=0 表示不設上限")]
     public float maxHeat = 0f;
+
+    [Tooltip("物件『已燃燒』後，每秒自發增加的固定熱量")]
+    public float selfHeatPerSecond = 20f;
 
     [Header("視覺/音效")]
     public GameObject firePrefab;          // 火焰特效（由本腳本生成/管理）
@@ -29,6 +37,10 @@ public class Flammable : MonoBehaviour
     [Header("監看/控制")]
     [Tooltip("目前熱量（可在執行時調整）")]
     public float heat = 0f;
+
+    //[Header("狀態顯示")]
+    //[Tooltip("目前是否正在燃燒（僅供觀察）")]
+    //public bool isBurning;
 
     GameObject fireInstance;
     bool _isBurning; // 內部狀態（不顯示於 Inspector）
@@ -52,21 +64,32 @@ public class Flammable : MonoBehaviour
             // 未燃燒：自然散熱，達門檻則點燃
             heat -= heatDissipation * Time.deltaTime;
             ClampHeat();
-            if (heat >= ignitionHeat) Ignite();
+            if (heat >= ignitionHeat && fuel > 0f) Ignite();
             return;
         }
 
-        // 燃燒中：燃料遞減
+        // 燃燒中：燃料遞減 + 自發產熱（不再吃外部加熱）
         fuel -= Time.deltaTime;
+        heat += selfHeatPerSecond * Time.deltaTime;
+        ClampHeat();
 
         // 熄滅條件：燃料用盡 或 熱量跌破門檻
         if (fuel <= 0f || heat < ignitionHeat)
+        {
             Extinguish();
+            //if (fireInstance) Destroy(fireInstance);
+            //if (residualSmokePrefab)
+            //    Instantiate(residualSmokePrefab, fireAnchor.position, fireAnchor.rotation);
+            //_isBurning = false;
+            //isBurning = false;
+
+        }
     }
 
-    /// <summary>來自鄰居火源的加熱（已含上限夾值）</summary>
+    /// <summary>來自鄰居火源的加熱：已燃燒則忽略，未燃燒才接受。</summary>
     public void AddHeat(float amount)
     {
+        if (_isBurning) return;           // ★ 已燃燒：不再接受外部加熱
         if (amount <= 0f) return;
         heat += amount;
         ClampHeat();
@@ -75,7 +98,9 @@ public class Flammable : MonoBehaviour
     void Ignite()
     {
         if (_isBurning) return;
+        Debug.Log($"[Flammable] {gameObject.name} 開始燃燒！");
         _isBurning = true;
+        //isBurning = true;
 
         if (firePrefab)
         {
@@ -97,7 +122,8 @@ public class Flammable : MonoBehaviour
         }
 
         _isBurning = false;
-
+        //isBurning = false;
+        Debug.Log($"[Flammable] {gameObject.name} 熄滅！");
         // 熄滅時（可選）順手降一點溫
         if (cool > 0f) { heat -= cool; ClampHeat(); }
         fuel = Mathf.Max(0f, fuel);
@@ -130,14 +156,21 @@ public class Flammable : MonoBehaviour
                         continue;
                 }
 
-                // 距離衰減後加熱
+                // 距離衰減後加熱（只會影響「尚未燃燒」的鄰居；因為 f.AddHeat 內已過濾）
                 float dist = Vector3.Distance(center, f.fireAnchor.position);
-                float falloff = Mathf.Clamp01(1f - dist / spreadRadius);
-                float add = heatPerSecond * falloff * 0.2f; // 0.2s 一跳
-                if (add > 0f) f.AddHeat(add); // f.AddHeat 內部已做 MaxHeat 夾值
+                float falloff = GetFalloff(dist, spreadRadius, 1.5f); // 前慢後快
+                float add = heatPerSecond * falloff * 0.2f;           // 0.2s 一跳
+                if (add > 0f) f.AddHeat(add);
             }
             yield return wait;
         }
+    }
+
+    float GetFalloff(float dist, float radius, float k = 2f)
+    {
+        if (dist >= radius) return 0f;
+        float x = dist / radius;          // 0..1
+        return 1f - Mathf.Pow(x, k);      // k>1：前慢後快
     }
 
     /// <summary>滅火器：只降低熱量（已含下限0與上限 MaxHeat 夾值）</summary>
