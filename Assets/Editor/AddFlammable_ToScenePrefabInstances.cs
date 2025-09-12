@@ -153,14 +153,14 @@ public static class AddFlammable_ToScenePrefabInstances
                     }
 
                     // ===== 套固定參數 =====
-                    f.ignitionHeat = 150f;
-                    f.heatDissipation = 5f;
-                    f.fuel = 600f;
-                    f.spreadRadius = 4f;
-                    f.heatPerSecond = 15f;
+                    f.ignitionHeat = 120f;
+                    f.heatDissipation = 12f;
+                    f.fuel = 420f;
+                    f.spreadRadius = 3.5f;
+                    f.heatPerSecond = 12f;
                     f.flammableMask = fireMask;        // 指到 FireLayer
                     f.maxHeat = 400f;
-                    f.selfHeatPerSecond = 7f;
+                    f.selfHeatPerSecond = 8f;
 
                     f.firePrefab = firePrefab;
                     f.residualSmokePrefab = null;
