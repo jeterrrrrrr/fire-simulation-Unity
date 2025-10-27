@@ -32,7 +32,7 @@ public class opencloseDoorVR : MonoBehaviour
         {
             toggleAction.action.Enable();
             toggleAction.action.performed += OnTogglePerformed;
-            Debug.Log("[Door] Toggle action 已啟用");
+            //Debug.Log("[Door] Toggle action 已啟用");
         }
     }
 
@@ -42,7 +42,7 @@ public class opencloseDoorVR : MonoBehaviour
         {
             toggleAction.action.performed -= OnTogglePerformed;
             toggleAction.action.Disable();
-            Debug.Log("[Door] Toggle action 已停用");
+            //Debug.Log("[Door] Toggle action 已停用");
         }
     }
 

@@ -1,39 +1,129 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class ExtinguisherController : MonoBehaviour
 {
-    public ParticleSystem smokeEffect; // ·À¤õ¾¹ªº·ÏÃú¯S®Ä
-    public InputActionReference spray_trigger; // §æ¾÷°Ê§@¿é¤J
-    private void Start()
+    [Header("FX")]
+    public ParticleSystem smokeEffect;          // ï¿½Qï¿½gï¿½É¤lï¿½]ï¿½ï¿½ï¿½bï¿½Qï¿½fï¿½^
+    public AudioSource sprayLoop;               // ï¿½iï¿½ï¿½Gï¿½Qï¿½gï¿½n
+
+    [Header("Input")]
+    public InputActionReference spray_trigger;  // ï¿½jï¿½uï¿½ï¿½ï¿½ Trigger / Activateï¿½v
+    [Range(0f, 1f)] public float triggerThreshold = 0.25f;
+
+    [Header("State (ï¿½Ñ¥~ï¿½ï¿½ï¿½Æ¥ï¿½])")]
+    public bool isPinRemoved = false;           // Pin ï¿½}ï¿½ï¿½ï¿½ï¿½_ï¿½É©Iï¿½s MarkPinRemoved()
+    public bool isHoseDetached = false;         // HoseSocket ï¿½Þ¥Xï¿½É©Iï¿½s MarkHoseDetached()
+
+    [Header("XR")]
+    public UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable xrGrab;           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¡]ï¿½ï¿½_ï¿½ï¿½~ï¿½ï¿½Qï¿½^
+
+    // ï¿½ï¿½ï¿½ï¿½
+    bool isSpraying = false;
+    float triggerValue = 0f;
+    bool isHeld = false;                        // ï¿½Oï¿½_ï¿½Q XR ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    void OnEnable()
     {
-        spray_trigger.action.performed += triggerAction;
+        if (spray_trigger != null)
+        {
+            // ï¿½Tï¿½Oï¿½iÅªï¿½È¡Fï¿½]ï¿½qï¿½\ canceled ï¿½Hï¿½Kï¿½Ê§@ï¿½Qï¿½ï¿½ï¿½Î®É¯à°±ï¿½Q
+            spray_trigger.action.Enable();
+            spray_trigger.action.canceled += OnTriggerCanceled;
+        }
+
+        if (xrGrab == null) xrGrab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+        if (xrGrab != null)
+        {
+            xrGrab.selectEntered.AddListener(OnGrabbed);
+            xrGrab.selectExited.AddListener(OnReleased);
+        }
+
+        StopFXImmediate();
     }
 
-    private void OnDestroy()
+    void OnDisable()
     {
-        spray_trigger.action.performed -= triggerAction;
-    }
-    private void triggerAction(InputAction.CallbackContext callBack)
-    {
-        
-        if (callBack.action.ReadValue<float>() > 0.1f)
+        if (spray_trigger != null)
         {
-            if (!smokeEffect.isPlaying) 
-                smokeEffect.Play(); // «ö¤U®É¼½©ñ·ÏÃú
-            print("¼½©ñ·ÏÃú");
+            spray_trigger.action.canceled -= OnTriggerCanceled;
+            spray_trigger.action.Disable();
         }
-        else
+
+        if (xrGrab != null)
         {
-            if (smokeEffect.isPlaying)
-                smokeEffect.Stop(); // ÃP¶}®É°±¤î·ÏÃú
-            print("°±¤î·ÏÃú");
+            xrGrab.selectEntered.RemoveListener(OnGrabbed);
+            xrGrab.selectExited.RemoveListener(OnReleased);
         }
     }
 
     void Update()
     {
+        // ï¿½vï¿½VÅªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡]ï¿½ï¿½uï¿½a performed ï¿½iï¿½aï¿½^
+        triggerValue = (spray_trigger != null) ? spray_trigger.action.ReadValue<float>() : 0f;
 
+        // ï¿½uï¿½ï¿½ï¿½Q XR ï¿½ï¿½ï¿½ï¿½É¤~ï¿½ï¿½ï¿½\ï¿½Qï¿½ï¿½
+        bool wantSpray = isHeld && isPinRemoved && isHoseDetached && triggerValue >= triggerThreshold;
+
+        if (wantSpray && !isSpraying) StartSpray();
+        else if (!wantSpray && isSpraying) StopSpray();
+    }
+
+    // ï¿½ï¿½ Pin/Nozzle ï¿½Æ¥ï¿½Iï¿½s
+    public void MarkPinRemoved()
+    {
+        if (isPinRemoved) return;
+        isPinRemoved = true;
+        Debug.Log("[Extinguisher] Pin removed.");
+    }
+
+    public void MarkHoseDetached()
+    {
+        if (isHoseDetached) return;
+        isHoseDetached = true;
+        Debug.Log("[Extinguisher] Hose detached.");
+    }
+
+    void OnTriggerCanceled(InputAction.CallbackContext _)
+    {
+        if (isSpraying) StopSpray();
+    }
+
+    void StartSpray()
+    {
+        isSpraying = true;
+        if (smokeEffect && !smokeEffect.isPlaying) smokeEffect.Play();
+        if (sprayLoop && !sprayLoop.isPlaying) sprayLoop.Play();
+        Debug.Log("[Extinguisher] START spraying.");
+    }
+
+    void StopSpray()
+    {
+        isSpraying = false;
+        if (smokeEffect && smokeEffect.isPlaying)
+            smokeEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        if (sprayLoop && sprayLoop.isPlaying) sprayLoop.Stop();
+        Debug.Log("[Extinguisher] STOP spraying.");
+    }
+
+    void StopFXImmediate()
+    {
+        if (smokeEffect)
+            smokeEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        if (sprayLoop) sprayLoop.Stop();
+        isSpraying = false;
+    }
+
+    // XR ï¿½Æ¥ï¿½Gï¿½ï¿½_/ï¿½ï¿½U
+    void OnGrabbed(SelectEnterEventArgs args)
+    {
+        isHeld = true;
+    }
+
+    void OnReleased(SelectExitEventArgs args)
+    {
+        isHeld = false;
+        if (isSpraying) StopSpray();
     }
 }
