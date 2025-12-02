@@ -91,30 +91,133 @@ public class FireQuizManager : MonoBehaviour
     public Button btnX;
     public Text txtX;
 
-    [Header("UI - 下一題按鈕")]
-    public Button btnNext;   // ★ 新增：顯示詳解後才出現的「下一題」按鈕
+    [Header("UI - 導覽按鈕")]
+    public Button btnNext;        // 顯示詳解後才出現的「下一題」
+    public Button btnBackHome;   // 回首頁
 
-    const int QUESTIONS_PER_TYPE = 5;
+    [Header("UI - Panel 參照")]
+    public GameObject panelMainMenu; // 首頁 Panel
+    public GameObject panelQuiz;     // 測驗 Panel（通常就是這個物件）
+
+    [Header("UI - 計時")]
+    public Text txtTimer;            // 顯示倒數時間
+    public float quizTimeLimit = 60f; // 整份測驗限時（秒）
+
+    [Header("玩家移動鎖定")]
+    public MonoBehaviour[] componentsToDisable;
+
+    const int QUESTIONS_PER_TYPE = 3;
     const int SCORE_PER_QUESTION = 10;
 
     List<QuizQuestionRuntime> quizList = new List<QuizQuestionRuntime>();
+    List<QuestionRecord> currentRecords = new List<QuestionRecord>();   // 本次測驗所有題目紀錄
+
     int currentIndex = 0;
     int score = 0;
     bool isAnswered = false;
 
+    float timeLeft;
+    bool isTimeUp = false;
+    bool quizFinished = false;   // 正常做完或時間到，設成 true
+
+    // 建議：Start 不要自動 Init，由 MainMenuManager 按「開始測驗」時呼叫 InitQuiz
     void Start()
     {
-        InitQuiz();
+        // 留白或註解掉原本的 InitQuiz();
+        // InitQuiz();
     }
 
-    void InitQuiz()
+    // 給 MainMenuManager 呼叫
+
+    public void InitQuiz()
+
     {
+        LockMovement();
+        currentRecords = new List<QuestionRecord>();
+        quizFinished = false;
+        isTimeUp = false;
+
         LoadQuestions();
         SetupButtonEvents();
         score = 0;
         currentIndex = 0;
+        isAnswered = false;
+
+        timeLeft = quizTimeLimit;
         UpdateScoreUI();
+        UpdateTimerUI();
+
         ShowCurrentQuestion();
+    }
+
+    void Update()
+    {
+        // 沒開始題目、或已經結束就不跑計時
+        if (quizFinished) return;
+        if (quizList == null || quizList.Count == 0) return;
+
+        timeLeft -= Time.deltaTime;
+        if (timeLeft <= 0f)
+        {
+            timeLeft = 0f;
+            OnTimeUp();
+        }
+
+        UpdateTimerUI();
+    }
+
+    void UpdateTimerUI()
+    {
+        if (txtTimer != null)
+        {
+            int sec = Mathf.CeilToInt(timeLeft);
+            if (sec < 0) sec = 0;
+            txtTimer.text = $"剩餘時間：{sec} 秒";
+        }
+    }
+
+    void OnTimeUp()
+    {
+        if (quizFinished) return; // 避免重複執行
+
+        isTimeUp = true;
+        quizFinished = true;
+
+        // 將尚未作答的題目補成「未作答」（0 分）
+        // 目前流程下：currentIndex == 已作答題數
+        for (int i = currentIndex; i < quizList.Count; i++)
+        {
+            var q = quizList[i];
+            QuestionRecord record = new QuestionRecord
+            {
+                kind = q.kind,
+                questionText = q.questionText,
+                optionA = q.optionA,
+                optionB = q.optionB,
+                optionC = q.optionC,
+                optionD = q.optionD,
+                chosenAnswer = "",                // 未作答
+                correctAnswer = q.correctAnswer,
+                explanation = q.explanation
+            };
+            currentRecords.Add(record);
+        }
+
+        // 顯示時間到訊息
+        if (txtQuestion != null)
+            txtQuestion.text = $"時間到！測驗結束。\n總分：{score} / {quizList.Count * SCORE_PER_QUESTION}";
+
+        HideAllAnswerButtons();
+
+        // 存成一筆測驗紀錄
+        QuizResult result = new QuizResult
+        {
+            dateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            score = score,
+            totalQuestions = quizList.Count,
+            questions = new List<QuestionRecord>(currentRecords)
+        };
+        QuizHistoryStorage.AddResult(result);
     }
 
     void LoadQuestions()
@@ -125,11 +228,9 @@ public class FireQuizManager : MonoBehaviour
             return;
         }
 
-        // 先把原始文字抓出來
         string mcRaw = multipleChoiceJson.text;
         string tfRaw = trueFalseJson.text;
 
-        // 避免 JSON 裡有單一 '\' 造成轉義錯誤
         string mcFixed = mcRaw.Replace("\\", "\\\\");
         string tfFixed = tfRaw.Replace("\\", "\\\\");
 
@@ -175,16 +276,13 @@ public class FireQuizManager : MonoBehaviour
         int takeMC = Mathf.Min(QUESTIONS_PER_TYPE, mcList.Count);
         int takeTF = Mathf.Min(QUESTIONS_PER_TYPE, tfList.Count);
 
-        // 先決定要用哪些題
         var selectedTF = tfList.Take(takeTF).ToList();
         var selectedMC = mcList.Take(takeMC).ToList();
 
         quizList.Clear();
 
-        // ✅ 先出是非題
+        // 先是非，再選擇
         quizList.AddRange(selectedTF);
-
-        // ✅ 再出選擇題
         quizList.AddRange(selectedMC);
     }
 
@@ -205,23 +303,29 @@ public class FireQuizManager : MonoBehaviour
         btnO.onClick.AddListener(() => OnAnswerClicked("O"));
         btnX.onClick.AddListener(() => OnAnswerClicked("X"));
 
-        // ★ 新增：下一題按鈕事件
         if (btnNext != null)
         {
             btnNext.onClick.RemoveAllListeners();
             btnNext.onClick.AddListener(OnNextButtonClicked);
-            btnNext.gameObject.SetActive(false);  // 一開始先隱藏
+            btnNext.gameObject.SetActive(false);
+        }
+
+        if (btnBackHome != null)
+        {
+            btnBackHome.onClick.RemoveAllListeners();
+            btnBackHome.onClick.AddListener(OnBackHomeClicked);
         }
     }
 
     void ShowCurrentQuestion()
     {
+        if (quizFinished) return;  // 已經時間到或正常結束就不要再出題
+
         if (txtExplanation != null)
             txtExplanation.text = "";
 
         isAnswered = false;
 
-        // 確保下一題按鈕在出題時是關閉的
         if (btnNext != null)
             btnNext.gameObject.SetActive(false);
 
@@ -233,18 +337,17 @@ public class FireQuizManager : MonoBehaviour
             return;
         }
 
+        // 正常作完所有題目（尚未時間到）
         if (currentIndex >= quizList.Count)
         {
-            if (txtQuestion != null)
-                txtQuestion.text = $"測驗結束！總分：{score} / {quizList.Count * SCORE_PER_QUESTION}";
-            HideAllAnswerButtons();
+            FinishQuizNormally();
             return;
         }
 
         var q = quizList[currentIndex];
 
         if (txtQuestion != null)
-            txtQuestion.text = $"第{currentIndex + 1}題：{q.questionText}";
+            txtQuestion.text = $"第{currentIndex + 1}/10題：{q.questionText}";
 
         Debug.Log($"[ShowCurrentQuestion] 題號: {q.questionNumber}, 類型: {q.kind}, 題目: {q.questionText}");
 
@@ -254,31 +357,97 @@ public class FireQuizManager : MonoBehaviour
             ShowTrueFalseUI(q);
     }
 
+    void FinishQuizNormally()
+    {
+        if (quizFinished) return;
+        quizFinished = true;
+
+        if (txtQuestion != null)
+            txtQuestion.text = $"測驗結束！總分：{score} / {quizList.Count * SCORE_PER_QUESTION}";
+
+        HideAllAnswerButtons();
+
+        // 理論上 currentRecords.Count == quizList.Count，如果怕有差，可以補齊
+        if (currentRecords.Count < quizList.Count)
+        {
+            for (int i = currentRecords.Count; i < quizList.Count; i++)
+            {
+                var q = quizList[i];
+                QuestionRecord record = new QuestionRecord
+                {
+                    kind = q.kind,
+                    questionText = q.questionText,
+                    optionA = q.optionA,
+                    optionB = q.optionB,
+                    optionC = q.optionC,
+                    optionD = q.optionD,
+                    chosenAnswer = "",            // 當未作答處理
+                    correctAnswer = q.correctAnswer,
+                    explanation = q.explanation
+                };
+                currentRecords.Add(record);
+            }
+        }
+
+        QuizResult result = new QuizResult
+        {
+            dateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            score = score,
+            totalQuestions = quizList.Count,
+            questions = new List<QuestionRecord>(currentRecords)
+        };
+        QuizHistoryStorage.AddResult(result);
+    }
+
+    // ★ 有些題目只有 3 個選項，空的就隱藏按鈕
     void ShowChoiceUI(QuizQuestionRuntime q)
     {
-        btnA.gameObject.SetActive(true);
-        btnB.gameObject.SetActive(true);
-        btnC.gameObject.SetActive(true);
-        btnD.gameObject.SetActive(true);
+        if (btnO != null) btnO.gameObject.SetActive(false);
+        if (btnX != null) btnX.gameObject.SetActive(false);
 
-        btnO.gameObject.SetActive(false);
-        btnX.gameObject.SetActive(false);
+        bool hasA = !string.IsNullOrWhiteSpace(q.optionA);
+        bool hasB = !string.IsNullOrWhiteSpace(q.optionB);
+        bool hasC = !string.IsNullOrWhiteSpace(q.optionC);
+        bool hasD = !string.IsNullOrWhiteSpace(q.optionD);
 
-        if (txtA != null) txtA.text = $"A. {q.optionA}";
-        if (txtB != null) txtB.text = $"B. {q.optionB}";
-        if (txtC != null) txtC.text = $"C. {q.optionC}";
-        if (txtD != null) txtD.text = $"D. {q.optionD}";
+        if (btnA != null)
+        {
+            btnA.gameObject.SetActive(hasA);
+            if (hasA && txtA != null)
+                txtA.text = $"A. {q.optionA}";
+        }
+
+        if (btnB != null)
+        {
+            btnB.gameObject.SetActive(hasB);
+            if (hasB && txtB != null)
+                txtB.text = $"B. {q.optionB}";
+        }
+
+        if (btnC != null)
+        {
+            btnC.gameObject.SetActive(hasC);
+            if (hasC && txtC != null)
+                txtC.text = $"C. {q.optionC}";
+        }
+
+        if (btnD != null)
+        {
+            btnD.gameObject.SetActive(hasD);
+            if (hasD && txtD != null)
+                txtD.text = $"D. {q.optionD}";
+        }
     }
 
     void ShowTrueFalseUI(QuizQuestionRuntime q)
     {
-        btnA.gameObject.SetActive(false);
-        btnB.gameObject.SetActive(false);
-        btnC.gameObject.SetActive(false);
-        btnD.gameObject.SetActive(false);
+        if (btnA != null) btnA.gameObject.SetActive(false);
+        if (btnB != null) btnB.gameObject.SetActive(false);
+        if (btnC != null) btnC.gameObject.SetActive(false);
+        if (btnD != null) btnD.gameObject.SetActive(false);
 
-        btnO.gameObject.SetActive(true);
-        btnX.gameObject.SetActive(true);
+        if (btnO != null) btnO.gameObject.SetActive(true);
+        if (btnX != null) btnX.gameObject.SetActive(true);
 
         if (txtO != null) txtO.text = "O（正確）";
         if (txtX != null) txtX.text = "X（錯誤）";
@@ -286,26 +455,41 @@ public class FireQuizManager : MonoBehaviour
 
     void HideAllAnswerButtons()
     {
-        btnA.gameObject.SetActive(false);
-        btnB.gameObject.SetActive(false);
-        btnC.gameObject.SetActive(false);
-        btnD.gameObject.SetActive(false);
-        btnO.gameObject.SetActive(false);
-        btnX.gameObject.SetActive(false);
+        if (btnA != null) btnA.gameObject.SetActive(false);
+        if (btnB != null) btnB.gameObject.SetActive(false);
+        if (btnC != null) btnC.gameObject.SetActive(false);
+        if (btnD != null) btnD.gameObject.SetActive(false);
+        if (btnO != null) btnO.gameObject.SetActive(false);
+        if (btnX != null) btnX.gameObject.SetActive(false);
 
         if (btnNext != null)
-            btnNext.gameObject.SetActive(false); // 測驗結束時也隱藏
+            btnNext.gameObject.SetActive(false);
     }
 
     void OnAnswerClicked(string chosen)
     {
-        if (isAnswered) return;
+        // 已作答、已時間到或測驗已結束都不接受
+        if (isAnswered || quizFinished || isTimeUp) return;
         isAnswered = true;
 
         var q = quizList[currentIndex];
         string correct = q.correctAnswer;
-
         bool isCorrect = chosen.ToUpper() == correct;
+
+        // 記錄這一題
+        QuestionRecord record = new QuestionRecord
+        {
+            kind = q.kind,
+            questionText = q.questionText,
+            optionA = q.optionA,
+            optionB = q.optionB,
+            optionC = q.optionC,
+            optionD = q.optionD,
+            chosenAnswer = chosen.ToUpper(),
+            correctAnswer = correct,
+            explanation = q.explanation
+        };
+        currentRecords.Add(record);
 
         if (isCorrect)
         {
@@ -321,27 +505,27 @@ public class FireQuizManager : MonoBehaviour
 
         UpdateScoreUI();
 
-        // ★ 改成：顯示詳解後，讓「下一題」按鈕出現，由玩家自行按下一題
         if (btnNext != null)
             btnNext.gameObject.SetActive(true);
     }
 
-    // ★ 新增：下一題按鈕的事件處理
     void OnNextButtonClicked()
     {
-        // 確保已經作答才可以按下一題
-        if (!isAnswered) return;
+        if (!isAnswered || quizFinished || isTimeUp) return;
 
         if (btnNext != null)
             btnNext.gameObject.SetActive(false);
 
-        GoNextQuestion();
-    }
-
-    void GoNextQuestion()
-    {
         currentIndex++;
         ShowCurrentQuestion();
+    }
+
+    void OnBackHomeClicked()
+    {
+        UnlockMovement();
+
+        if (panelQuiz != null) panelQuiz.SetActive(false);
+        if (panelMainMenu != null) panelMainMenu.SetActive(true);
     }
 
     void UpdateScoreUI()
@@ -360,5 +544,25 @@ public class FireQuizManager : MonoBehaviour
             int k = rng.Next(n + 1);
             (list[k], list[n]) = (list[n], list[k]);
         }
+    }
+    void SetMovementEnabled(bool enabled)
+    {
+        if (componentsToDisable == null) return;
+
+        foreach (var comp in componentsToDisable)
+        {
+            if (comp == null) continue;
+            comp.enabled = enabled;
+        }
+    }
+
+    void LockMovement()
+    {
+        SetMovementEnabled(false);
+    }
+
+    void UnlockMovement()
+    {
+        SetMovementEnabled(true);
     }
 }

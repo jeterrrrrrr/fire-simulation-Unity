@@ -14,9 +14,11 @@ public class HistoryDetailManager : MonoBehaviour
     [Header("UI 按鈕")]
     public Button btnPrev;
     public Button btnNext;
-    public Button btnBack;
+    public Button btnBackToList;
 
-    public QuizUIController uiController;
+    [Header("Panel 參照")]
+    public GameObject panelHistoryList;
+    public GameObject panelHistoryDetail;
 
     QuizResult currentResult;
     int currentIndex = 0;
@@ -25,10 +27,10 @@ public class HistoryDetailManager : MonoBehaviour
     {
         if (btnPrev != null) btnPrev.onClick.AddListener(OnPrevClicked);
         if (btnNext != null) btnNext.onClick.AddListener(OnNextClicked);
-        if (btnBack != null) btnBack.onClick.AddListener(OnBackClicked);
+        if (btnBackToList != null) btnBackToList.onClick.AddListener(OnBackClicked);
     }
 
-    // 給 QuizUIController 呼叫
+    // 給 HistoryListManager 呼叫
     public void ShowResult(QuizResult result)
     {
         currentResult = result;
@@ -49,11 +51,11 @@ public class HistoryDetailManager : MonoBehaviour
 
         var q = currentResult.questions[currentIndex];
 
-        // 標題：日期 + 分數 + 題目進度
         if (txtHeader != null)
         {
+            int maxScore = currentResult.totalQuestions * 10; // 這裡假設每題 10 分
             txtHeader.text =
-                $"{currentResult.dateTime}  分數：{currentResult.score} / {(currentResult.totalQuestions * 10)}\n" +
+                $"{currentResult.dateTime}  分數：{currentResult.score} / {maxScore}\n" +
                 $"第 {currentIndex + 1} 題 / 共 {currentResult.questions.Count} 題";
         }
 
@@ -62,7 +64,6 @@ public class HistoryDetailManager : MonoBehaviour
             txtQuestion.text = q.questionText;
         }
 
-        // 顯示選項
         if (txtOptions != null)
         {
             if (q.kind == QuestionKind.MultipleChoice)
@@ -79,7 +80,6 @@ public class HistoryDetailManager : MonoBehaviour
             }
         }
 
-        // 顯示你的答案 & 正確答案（文字做成比較友善）
         if (txtYourAnswer != null)
         {
             txtYourAnswer.text = "你的答案：" + FormatAnswer(q.chosenAnswer, q);
@@ -95,7 +95,6 @@ public class HistoryDetailManager : MonoBehaviour
             txtExplanation.text = q.explanation;
         }
 
-        // 按鈕是否可按
         if (btnPrev != null)
             btnPrev.interactable = currentIndex > 0;
         if (btnNext != null)
@@ -139,7 +138,7 @@ public class HistoryDetailManager : MonoBehaviour
 
     void OnBackClicked()
     {
-        // 回到測驗紀錄列表
-        uiController.OnClickHistory();
+        if (panelHistoryDetail != null) panelHistoryDetail.SetActive(false);
+        if (panelHistoryList != null) panelHistoryList.SetActive(true);
     }
 }
