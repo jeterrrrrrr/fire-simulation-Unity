@@ -3373,15 +3373,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "Run",
-                    "type": "Button",
-                    "id": "d09cd35e-46b3-4db6-b62e-ad921cdfe01e",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -3421,22 +3412,11 @@
                 {
                     "name": "",
                     "id": "51c36019-604a-4be5-863a-b627e3cd1e95",
-                    "path": "<XRSimulatedController>/gripButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Crouch_XR",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "9528c1cf-e4a7-4191-bf6f-fe7c22531617",
                     "path": "<XRSimulatedController>/menuButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Run",
+                    "action": "Crouch_XR",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

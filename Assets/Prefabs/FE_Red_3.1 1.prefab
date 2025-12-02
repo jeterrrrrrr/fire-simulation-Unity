@@ -1215,7 +1215,7 @@ MonoBehaviour:
   triggerThreshold: 0.25
   isPinRemoved: 1
   isHoseDetached: 1
-  xrGrab: {fileID: 5487605089173925011}
+  xrGrabs: []
 --- !u!114 &1303830489770915528
 MonoBehaviour:
   m_ObjectHideFlags: 0

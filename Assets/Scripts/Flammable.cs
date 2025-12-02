@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 
 public class Flammable : MonoBehaviour
@@ -38,12 +39,14 @@ public class Flammable : MonoBehaviour
     [Tooltip("目前熱量（可在執行時調整）")]
     public float heat = 0f;
 
-    //[Header("狀態顯示")]
-    //[Tooltip("目前是否正在燃燒（僅供觀察）")]
-    //public bool isBurning;
+    [Header("事件")]
+    public UnityEvent onIgnited;
+    public UnityEvent onExtinguished;
 
     GameObject fireInstance;
-    bool _isBurning; // 內部狀態（不顯示於 Inspector）
+    bool _isBurning; // 內部狀態
+
+    public bool IsBurning => _isBurning;
 
     void Awake()
     {
@@ -54,7 +57,7 @@ public class Flammable : MonoBehaviour
     void Start()
     {
         // 以 Heat 作為起始熱量；若已達門檻就點燃
-        if (heat >= ignitionHeat) Ignite();
+        if (heat >= ignitionHeat && fuel > 0f) Ignite();
     }
 
     void Update()
@@ -68,7 +71,7 @@ public class Flammable : MonoBehaviour
             return;
         }
 
-        // 燃燒中：燃料遞減 + 自發產熱（不再吃外部加熱）
+        // 燃燒中：燃料遞減 + 自發產熱
         fuel -= Time.deltaTime;
         heat += selfHeatPerSecond * Time.deltaTime;
         ClampHeat();
@@ -77,19 +80,13 @@ public class Flammable : MonoBehaviour
         if (fuel <= 0f || heat < ignitionHeat)
         {
             Extinguish();
-            //if (fireInstance) Destroy(fireInstance);
-            //if (residualSmokePrefab)
-            //    Instantiate(residualSmokePrefab, fireAnchor.position, fireAnchor.rotation);
-            //_isBurning = false;
-            //isBurning = false;
-
         }
     }
 
     /// <summary>來自鄰居火源的加熱：已燃燒則忽略，未燃燒才接受。</summary>
     public void AddHeat(float amount)
     {
-        if (_isBurning) return;           // ★ 已燃燒：不再接受外部加熱
+        if (_isBurning) return; // ★ 已燃燒：不再接受外部加熱
         if (amount <= 0f) return;
         heat += amount;
         ClampHeat();
@@ -98,9 +95,8 @@ public class Flammable : MonoBehaviour
     void Ignite()
     {
         if (_isBurning) return;
-        Debug.Log($"[Flammable] {gameObject.name} 開始燃燒！");
         _isBurning = true;
-        //isBurning = true;
+        Debug.Log($"[Flammable] {gameObject.name} 開始燃燒！");
 
         if (firePrefab)
         {
@@ -109,7 +105,16 @@ public class Flammable : MonoBehaviour
                 ps.Play();
         }
 
+        onIgnited?.Invoke();
         StartCoroutine(SpreadRoutine());
+    }
+
+    /// <summary>外部強制立刻熄滅（例如劇情或結算）。</summary>
+    public void ForceExtinguish(float cool = 0f)
+    {
+        fuel = 0f;
+        heat = Mathf.Max(0f, heat - cool);
+        if (_isBurning) Extinguish(); // 若正在燒，走完整熄滅流程（含事件）
     }
 
     public void Extinguish(float cool = 0f)
@@ -122,7 +127,6 @@ public class Flammable : MonoBehaviour
         }
 
         _isBurning = false;
-        //isBurning = false;
         Debug.Log($"[Flammable] {gameObject.name} 熄滅！");
         // 熄滅時（可選）順手降一點溫
         if (cool > 0f) { heat -= cool; ClampHeat(); }
@@ -131,6 +135,8 @@ public class Flammable : MonoBehaviour
         if (fireInstance) Destroy(fireInstance);
         if (residualSmokePrefab)
             Instantiate(residualSmokePrefab, fireAnchor.position, fireAnchor.rotation);
+
+        onExtinguished?.Invoke();
     }
 
     IEnumerator SpreadRoutine()
@@ -156,7 +162,7 @@ public class Flammable : MonoBehaviour
                         continue;
                 }
 
-                // 距離衰減後加熱（只會影響「尚未燃燒」的鄰居；因為 f.AddHeat 內已過濾）
+                // 距離衰減後加熱（只會影響尚未燃燒的鄰居；AddHeat 內已過濾）
                 float dist = Vector3.Distance(center, f.fireAnchor.position);
                 float falloff = GetFalloff(dist, spreadRadius, 1.5f); // 前慢後快
                 float add = heatPerSecond * falloff * 0.2f;           // 0.2s 一跳
@@ -179,7 +185,7 @@ public class Flammable : MonoBehaviour
         if (amount <= 0f) return;
         heat -= amount;
         ClampHeat();
-        // 不在這裡直接 Extinguish；由 Update 判斷 (fuel<=0 || heat<ignitionHeat)
+        // 是否立刻熄滅由 Update 判斷 (fuel<=0 || heat<ignitionHeat)
     }
 
     /// <summary>將 heat 夾在 [0, MaxHeat]；MaxHeat<=0 表示不設上限</summary>
