@@ -29,6 +29,10 @@ public class VRLocomotionExtendedWithLogs : MonoBehaviour
     public float jumpSpeed = 3.5f;
     public float groundedSkin = 0.05f;
 
+    [Header("Map UI")]
+    public GameObject mapUI;  // 對應 Inspector 的 Map Panel
+
+
     [Header("Run Settings")]
     [Tooltip("指向你的移動元件（DynamicMoveProvider / ActionBasedContinuousMoveProvider / 任何有 moveSpeed 欄位的元件）")]
     public Component moveProvider;          // ★ 指向移動提供器
@@ -137,12 +141,11 @@ public class VRLocomotionExtendedWithLogs : MonoBehaviour
     }
     void OnJumpPerformed(InputAction.CallbackContext ctx)
     {
-        if (!enableJump) return;
-        if (cc.isGrounded || CheckGrounded())
-        {
-            _verticalVel = jumpSpeed;
-            Log($"[Jump] 起跳 vY={_verticalVel:F2}");
-        }
+        if (mapUI == null) return;
+
+        // 切換顯示狀態
+        mapUI.SetActive(!mapUI.activeSelf);
+        Log($"[Map] Map UI {(mapUI.activeSelf ? "顯示" : "隱藏")}");
     }
     void OnRunPerformed(InputAction.CallbackContext ctx)
     {

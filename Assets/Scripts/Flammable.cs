@@ -89,10 +89,13 @@ public class Flammable : MonoBehaviour
         if (_isBurning) return; // ★ 已燃燒：不再接受外部加熱
         if (amount <= 0f) return;
         heat += amount;
+       
         ClampHeat();
     }
 
-    void Ignite()
+
+
+    public void Ignite()
     {
         if (_isBurning) return;
         _isBurning = true;

@@ -101,6 +101,7 @@ public class FireQuizManager : MonoBehaviour
 
     [Header("UI - 計時")]
     public Text txtTimer;            // 顯示倒數時間
+    [SerializeField] private Image imgTimerFill;   // 拖你的圓形 Image 進來
     public float quizTimeLimit = 60f; // 整份測驗限時（秒）
 
     [Header("玩家移動鎖定")]
@@ -172,7 +173,14 @@ public class FireQuizManager : MonoBehaviour
         {
             int sec = Mathf.CeilToInt(timeLeft);
             if (sec < 0) sec = 0;
-            txtTimer.text = $"剩餘時間：{sec} 秒";
+            txtTimer.text = $"{sec}";
+        }
+
+        if (imgTimerFill != null && quizTimeLimit > 0f)
+        {
+            imgTimerFill.fillAmount = Mathf.Clamp01(timeLeft / quizTimeLimit);
+            // 如果你想「時間越少越滿」就改成：
+            // imgTimerFill.fillAmount = 1f - Mathf.Clamp01(timeLeft / totalTime);
         }
     }
 
@@ -273,7 +281,7 @@ public class FireQuizManager : MonoBehaviour
         Shuffle(mcList);
         Shuffle(tfList);
 
-        int takeMC = Mathf.Min(QUESTIONS_PER_TYPE, mcList.Count);
+        int takeMC = Mathf.Min(10-QUESTIONS_PER_TYPE, mcList.Count);
         int takeTF = Mathf.Min(QUESTIONS_PER_TYPE, tfList.Count);
 
         var selectedTF = tfList.Take(takeTF).ToList();
@@ -363,7 +371,7 @@ public class FireQuizManager : MonoBehaviour
         quizFinished = true;
 
         if (txtQuestion != null)
-            txtQuestion.text = $"測驗結束！總分：{score} / {quizList.Count * SCORE_PER_QUESTION}";
+            txtQuestion.text = $"測驗結束！總分：{score} / 100";
 
         HideAllAnswerButtons();
 

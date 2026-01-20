@@ -32,7 +32,7 @@ public class opencloseDoorVR : MonoBehaviour
         {
             toggleAction.action.Enable();
             toggleAction.action.performed += OnTogglePerformed;
-            //Debug.Log("[Door] Toggle action 已啟用");
+            Debug.Log("[Door] Toggle action 已啟用");
         }
     }
 
@@ -42,7 +42,7 @@ public class opencloseDoorVR : MonoBehaviour
         {
             toggleAction.action.performed -= OnTogglePerformed;
             toggleAction.action.Disable();
-            //Debug.Log("[Door] Toggle action 已停用");
+            Debug.Log("[Door] Toggle action 已停用");
         }
     }
 
@@ -59,16 +59,13 @@ public class opencloseDoorVR : MonoBehaviour
 
         if (Time.time - lastToggleTime < minToggleInterval)
         {
-            Debug.Log("[Door] 操作太快，忽略一次");
             return;
         }
 
         float dist = Vector3.Distance(player.position, transform.position);
-        Debug.Log("[Door] 玩家距離門：" + dist.ToString("F2"));
 
         if (dist > interactDistance)
         {
-            Debug.Log("[Door] 太遠，不能互動");
             return;
         }
 
@@ -76,12 +73,10 @@ public class opencloseDoorVR : MonoBehaviour
 
         if (open)
         {
-            Debug.Log("[Door] 嘗試關門");
             StartCoroutine(Closing());
         }
         else
         {
-            Debug.Log("[Door] 嘗試開門");
             StartCoroutine(Opening());
         }
     }
@@ -90,7 +85,6 @@ public class opencloseDoorVR : MonoBehaviour
     {
         openandclose.Play(openState);
         open = true;
-        Debug.Log("[Door] 動畫播放：Opening");
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -98,7 +92,6 @@ public class opencloseDoorVR : MonoBehaviour
     {
         openandclose.Play(closeState);
         open = false;
-        Debug.Log("[Door] 動畫播放：Closing");
         yield return new WaitForSeconds(0.5f);
     }
 }
