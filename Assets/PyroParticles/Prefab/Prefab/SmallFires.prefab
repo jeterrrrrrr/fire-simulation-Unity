@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 403168}
   - component: {fileID: 19922014}
   - component: {fileID: 19818194}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: SmallFiresSparksParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4966,7 +4966,7 @@ GameObject:
   m_Component:
   - component: {fileID: 437396}
   - component: {fileID: 10880456}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: SmallFiresLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5064,7 +5064,7 @@ GameObject:
   - component: {fileID: 437804}
   - component: {fileID: 19963694}
   - component: {fileID: 19830650}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: SmallFiresSmoke
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9786,7 +9786,7 @@ GameObject:
   - component: {fileID: 411110}
   - component: {fileID: 19809690}
   - component: {fileID: 19907964}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: SmallFiresParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14588,7 +14588,7 @@ GameObject:
   m_Component:
   - component: {fileID: 429132}
   - component: {fileID: 8233310}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: SmallFiresSound
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14772,7 +14772,8 @@ GameObject:
   - component: {fileID: 458676}
   - component: {fileID: 11426332}
   - component: {fileID: 11437672}
-  m_Layer: 8
+  - component: {fileID: 4911642944024749442}
+  m_Layer: 6
   m_Name: SmallFires
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14797,6 +14798,7 @@ Transform:
   - {fileID: 429132}
   - {fileID: 437804}
   - {fileID: 437396}
+  - {fileID: 3456641085127755710}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &11426332
@@ -14836,3 +14838,55 @@ MonoBehaviour:
   IntensityMaxRange:
     Minimum: 0
     Maximum: 8
+--- !u!65 &4911642944024749442
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 198690}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2757437, y: 0.18678561, z: 1.2036798}
+  m_Center: {x: -0.03946066, y: -0.032247886, z: 0.016414404}
+--- !u!1 &8573962267623106462
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3456641085127755710}
+  m_Layer: 6
+  m_Name: collider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3456641085127755710
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8573962267623106462}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -31.658846, y: 2.9464626, z: 14.91841}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 458676}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

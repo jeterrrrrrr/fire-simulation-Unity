@@ -25,6 +25,12 @@ public class ExtinguisherController : MonoBehaviour
     public XRGrabInteractable pinGrab;          // ← 在 Inspector 把「Pin物件」的 XRGrabInteractable 拖進來
     public bool onlyHandGrabRemovesPin = false; // 若勾選，僅限 XRDirectInteractor（手）抓到才算拔出
 
+    [Header("Handle Press Animation")]
+    public Transform handleHinge;               // ★拖入 HandleHinge（空物件，pivot在轉軸）
+    public float handleRestZ = 0f;              // ★放開角度
+    public float handlePressedZ = 40f;          // ★壓下角度（你要 0 -> 40）
+    public float handleSpeed = 12f;             // ★回彈/壓下速度（越大越快）
+
     // 內部
     bool isSpraying = false;
     float triggerValue = 0f;
@@ -56,6 +62,9 @@ public class ExtinguisherController : MonoBehaviour
         }
 
         StopFXImmediate();
+
+        // ★確保進場時手柄在放開狀態
+        SetHandleZImmediate(handleRestZ);
     }
 
     void OnDisable()
@@ -84,6 +93,9 @@ public class ExtinguisherController : MonoBehaviour
         triggerValue = (spray_trigger != null) ? spray_trigger.action.ReadValue<float>() : 0f;
 
         bool wantSpray = isHeld && isPinRemoved && isHoseDetached && triggerValue >= triggerThreshold;
+
+        // ★手柄動畫：根據 wantSpray 壓下/放開（平滑）
+        UpdateHandle(wantSpray);
 
         if (wantSpray && !isSpraying) StartSpray();
         else if (!wantSpray && isSpraying) StopSpray();
@@ -163,5 +175,31 @@ public class ExtinguisherController : MonoBehaviour
             isPinRemoved = true;
             Debug.Log("[Extinguisher] Pin removed (grabbed).");
         }
+    }
+
+    // =========================
+    // ★ Handle Press Animation
+    // =========================
+    void UpdateHandle(bool spraying)
+    {
+        if (handleHinge == null) return;
+
+        float targetZ = spraying ? handlePressedZ : handleRestZ;
+
+        Vector3 e = handleHinge.localEulerAngles;
+
+        // LerpAngle 避免 0/360 跳動；exp 平滑、與幀率無關
+        float t = 1f - Mathf.Exp(-handleSpeed * Time.deltaTime);
+        e.z = Mathf.LerpAngle(e.z, targetZ, t);
+
+        handleHinge.localEulerAngles = e;
+    }
+
+    void SetHandleZImmediate(float z)
+    {
+        if (handleHinge == null) return;
+        Vector3 e = handleHinge.localEulerAngles;
+        e.z = z;
+        handleHinge.localEulerAngles = e;
     }
 }

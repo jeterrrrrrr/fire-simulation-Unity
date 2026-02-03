@@ -51,6 +51,7 @@ public class Flammable : MonoBehaviour
     void Awake()
     {
         if (!fireAnchor) fireAnchor = transform;
+     
         ClampHeat(); // 確保初值在界內
     }
 
