@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // ★ 1. 必須加入這行才能切換場景
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     [Header("UI Panels")]
     public GameObject startUI;
     public GameObject failureUI;
+    public GameObject successUI;   // ★ 成功畫面
+    public GameObject hudPanel;    // ★ HUD（計時顯示）
 
     [Header("Player Control")]
     public GameObject locomotionSystem;
@@ -14,47 +16,54 @@ public class GameManager : MonoBehaviour
 
     [Header("Timer UI")]
     public Image radialTimer;
-    public Text timerText; // 若使用 TMPro 請自行更改
+    public Text timerText;
 
     [Header("Timer Settings")]
     public int timeLimit = 180;
-    private int currentTime; // 用來記錄動態時間
+    private int currentTime;
+    private bool gameEnded = false;
 
     void Start()
     {
-        // 確保重新開始時，時間重置
-        currentTime = timeLimit; 
-        
-        // 初始狀態
-        if (failureUI != null) failureUI.SetActive(false);
-        startUI.SetActive(true);
-        
-        // 剛開始不能動
-        locomotionSystem.SetActive(false);
-        leftController.SetActive(false);
+        currentTime = timeLimit;
 
-        if (timerText != null) timerText.text = currentTime.ToString();
+        if (startUI) startUI.SetActive(true);
+        if (failureUI) failureUI.SetActive(false);
+        if (successUI) successUI.SetActive(false);
+        if (hudPanel) hudPanel.SetActive(false);
+
+        // 一開始不能動
+        if (locomotionSystem) locomotionSystem.SetActive(false);
+        if (leftController) leftController.SetActive(false);
+
+        UpdateTimerUI();
     }
 
     public void StartGame()
     {
-        locomotionSystem.SetActive(true);
-        leftController.SetActive(true);
-        startUI.SetActive(false);
-        
-        // 確保每次開始都重置計時器
+        gameEnded = false;
+
+        if (startUI) startUI.SetActive(false);
+        if (hudPanel) hudPanel.SetActive(true);
+
+        if (locomotionSystem) locomotionSystem.SetActive(true);
+        if (leftController) leftController.SetActive(true);
+
         currentTime = timeLimit;
-        InvokeRepeating("timer", 1, 1);
+        UpdateTimerUI();
+
+        CancelInvoke();
+        InvokeRepeating(nameof(TimerTick), 1f, 1f);
     }
 
-    void timer()
+    void TimerTick()
     {
-        currentTime -= 1; // 使用內部變數計算
-        if (timerText != null) timerText.text = currentTime.ToString();
+        if (gameEnded) return;
 
-        float progress = Mathf.Clamp01(((float)currentTime) / (float)timeLimit);
-        if (radialTimer != null) radialTimer.fillAmount = progress;
-        
+        currentTime--;
+
+        UpdateTimerUI();
+
         if (currentTime <= 0)
         {
             currentTime = 0;
@@ -62,21 +71,49 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void TimeUp()
+    void UpdateTimerUI()
     {
-        Debug.Log("時間到！");
-        CancelInvoke("timer");
+        if (timerText)
+            timerText.text = currentTime.ToString();
 
-        // 停止移動
-        if (locomotionSystem != null) locomotionSystem.SetActive(false);
-        // 顯示失敗畫面
-        if (failureUI != null) failureUI.SetActive(true);
+        if (radialTimer)
+            radialTimer.fillAmount = Mathf.Clamp01((float)currentTime / timeLimit);
     }
 
-    // ★ 2. 新增這個函式：重新載入當前場景
+    void TimeUp()
+    {
+        gameEnded = true;
+        CancelInvoke();
+
+        Debug.Log("❌ 時間到，任務失敗");
+
+        if (locomotionSystem) locomotionSystem.SetActive(false);
+        if (leftController) leftController.SetActive(false);
+
+        if (hudPanel) hudPanel.SetActive(false);
+        if (failureUI) failureUI.SetActive(true);
+    }
+
+    // ⭐ 由「通關判斷（找到4個危險源）」呼叫
+    public void GameSuccess()
+    {
+        if (gameEnded) return;
+
+        gameEnded = true;
+        CancelInvoke();
+
+        Debug.Log("🎉 任務成功");
+
+        if (locomotionSystem) locomotionSystem.SetActive(false);
+        if (leftController) leftController.SetActive(false);
+
+        if (hudPanel) hudPanel.SetActive(false);
+        if (successUI) successUI.SetActive(true);
+    }
+
+    // 重新開始
     public void RestartGame()
     {
-        // 讀取目前正在執行的場景名稱，並重新載入它
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

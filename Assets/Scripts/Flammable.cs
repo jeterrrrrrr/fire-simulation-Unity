@@ -201,4 +201,15 @@ public class Flammable : MonoBehaviour
         // 上限（若 maxHeat <= 0 代表不限制）
         if (maxHeat > 0f && heat > maxHeat) heat = maxHeat;
     }
+
+    public void TryIgnite()
+    {
+        if (_isBurning) return;
+        if (fuel <= 0f) return;
+
+        // 確保熱量至少達到點燃門檻（避免點燃後立刻因 heat < ignitionHeat 被 Extinguish）
+        if (heat < ignitionHeat) heat = ignitionHeat;
+
+        Ignite();
+    }
 }

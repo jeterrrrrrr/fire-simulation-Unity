@@ -14084,7 +14084,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2949836645762582472, guid: ca794718ea2a2e4438e37724e4f6a6cc, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -10
+      value: -10.3
       objectReference: {fileID: 0}
     - target: {fileID: 2949836645762582472, guid: ca794718ea2a2e4438e37724e4f6a6cc, type: 3}
       propertyPath: m_LocalPosition.y
@@ -14092,7 +14092,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2949836645762582472, guid: ca794718ea2a2e4438e37724e4f6a6cc, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.6499999
+      value: -3.65
       objectReference: {fileID: 0}
     - target: {fileID: 2949836645762582472, guid: ca794718ea2a2e4438e37724e4f6a6cc, type: 3}
       propertyPath: m_LocalRotation.w
@@ -38123,8 +38123,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c44e92d0b493b1d4fb605b31c2ac050a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetCamera: {fileID: 1006242427}
-  modelAsset: {fileID: 5022602860645237092, guid: 606d69a1b8574c941bbbdd36d3503600, type: 3}
 --- !u!1 &1009930839 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6683477847236081759, guid: ca794718ea2a2e4438e37724e4f6a6cc, type: 3}
@@ -63616,7 +63614,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: aaf34f304545bac4d80411c08294ba95, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b56ff8db6ce144744bdd8eb00cdf4f32, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -79574,7 +79572,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 080747497e0c2704b91e62c2db7b136f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4d1e05cc5660c574b9fe66c181d176b8, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

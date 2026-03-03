@@ -6,7 +6,7 @@ public static class GameState
     static readonly bool[] cleared = new bool[LevelCount];
 
     // （可選）要不要用 PlayerPrefs 永久保存
-    public static bool usePlayerPrefs = true;
+    public static bool usePlayerPrefs = false;
     const string KEY_PREFIX = "GS_Cleared_";   // GS_Cleared_1 ... GS_Cleared_4
     static bool loaded = false;
 
